@@ -348,6 +348,46 @@
         .status-disconnected {
             background-color: var(--danger);
         }
+        
+        .time-display {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .time-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+        
+        .time-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .onoff-count {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        
+        .onoff-item {
+            text-align: center;
+        }
+        
+        .onoff-number {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .onoff-text {
+            font-size: 14px;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -376,7 +416,7 @@
             <h2><i class="fas fa-link"></i> Konfigurasi URL Google Apps Script</h2>
             <p>Masukkan URL Google Apps Script yang digunakan untuk mengambil data:</p>
             <div class="url-form">
-                <input type="text" class="url-input" id="scriptUrl" placeholder="https://script.google.com/..." value="https://script.google.com/macros/s/AKfycbzcjW6IRxYSPaY57S7wc-dJ9ri0NlMNPMlnqDIJs0LBmqICbvUJF2MB8h3rYrPO7tjl/exec">
+                <input type="text" class="url-input" id="scriptUrl" placeholder="https://script.google.com/..." value="https://script.google.com/macros/s/AKfycbxhpXDsZI9ZJRAeBvhXueMPY_-96UP4qKW3_aEM623jQBrl6BAkA7rNW0XgxSVNgOXR/exec">
                 <button class="submit-btn" id="saveUrl">Simpan URL</button>
             </div>
             <p id="urlStatus" style="margin-top: 10px;"></p>
@@ -482,9 +522,15 @@
                             <h2 class="card-title">Waktu Operasi Hari Ini</h2>
                             <i class="fas fa-clock card-icon"></i>
                         </div>
-                        <div class="data-value" id="today-time">-</div>
-                        <div class="data-value">
-                            Status: <span id="today-status" class="status-badge status-off">-</span>
+                        <div class="time-display">
+                            <div class="time-label">Total Waktu ON</div>
+                            <div class="time-value" id="today-time">00:00:00</div>
+                        </div>
+                        <div class="onoff-count">
+                            <div class="onoff-item">
+                                <div class="onoff-number" id="today-onoff-count">0</div>
+                                <div class="onoff-text">Total ON/OFF</div>
+                            </div>
                         </div>
                     </div>
 
@@ -525,9 +571,15 @@
                             <h2 class="card-title">Waktu Operasi Kemarin</h2>
                             <i class="fas fa-clock card-icon"></i>
                         </div>
-                        <div class="data-value" id="yesterday-time">-</div>
-                        <div class="data-value">
-                            Status: <span id="yesterday-status" class="status-badge status-off">-</span>
+                        <div class="time-display">
+                            <div class="time-label">Total Waktu ON</div>
+                            <div class="time-value" id="yesterday-time">00:00:00</div>
+                        </div>
+                        <div class="onoff-count">
+                            <div class="onoff-item">
+                                <div class="onoff-number" id="yesterday-onoff-count">0</div>
+                                <div class="onoff-text">Total ON/OFF</div>
+                            </div>
                         </div>
                     </div>
 
@@ -565,7 +617,7 @@
 
     <script>
         // Konfigurasi
-        let GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzcjW6IRxYSPaY57S7wc-dJ9ri0NlMNPMlnqDIJs0LBmqICbvUJF2MB8h3rYrPO7tjl/exec';
+        let GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhpXDsZI9ZJRAeBvhXueMPY_-96UP4qKW3_aEM623jQBrl6BAkA7rNW0XgxSVNgOXR/exec';
         const UPDATE_INTERVAL = 5000; // 5 detik
 
         // State aplikasi
@@ -593,7 +645,7 @@
 
         // Format waktu
         function formatTime(seconds) {
-            if (seconds === undefined || seconds === null) return '-';
+            if (seconds === undefined || seconds === null) return '00:00:00';
             const hrs = Math.floor(seconds / 3600);
             const mins = Math.floor((seconds % 3600) / 60);
             const secs = seconds % 60;
@@ -775,13 +827,9 @@
                 const totalSeconds = data.Jam_Today * 3600 + data.Menit_Today * 60 + data.Detik_Today;
                 document.getElementById('today-time').textContent = formatTime(totalSeconds);
                 
-                const todayStatus = document.getElementById('today-status');
-                if (data.OnOff_Today == 1) {
-                    todayStatus.textContent = 'ON';
-                    todayStatus.className = 'status-badge status-on';
-                } else {
-                    todayStatus.textContent = 'OFF';
-                    todayStatus.className = 'status-badge status-off';
+                // Total ON/OFF hari ini
+                if (data.OnOff_Today !== undefined) {
+                    document.getElementById('today-onoff-count').textContent = data.OnOff_Today;
                 }
             }
             
@@ -790,13 +838,9 @@
                 const totalSeconds = data.Jam_Kemarin * 3600 + data.Menit_Kemarin * 60 + data.Detik_Kemarin;
                 document.getElementById('yesterday-time').textContent = formatTime(totalSeconds);
                 
-                const yesterdayStatus = document.getElementById('yesterday-status');
-                if (data.OnOff_Kemarin == 1) {
-                    yesterdayStatus.textContent = 'ON';
-                    yesterdayStatus.className = 'status-badge status-on';
-                } else {
-                    yesterdayStatus.textContent = 'OFF';
-                    yesterdayStatus.className = 'status-badge status-off';
+                // Total ON/OFF kemarin
+                if (data.OnOff_Kemarin !== undefined) {
+                    document.getElementById('yesterday-onoff-count').textContent = data.OnOff_Kemarin;
                 }
             }
             
